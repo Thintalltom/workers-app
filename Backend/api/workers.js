@@ -45,18 +45,21 @@ router.get("/", (req, res) => {
 router.post("/", upload.single("profile"), async (req, res) => {
   try {
     const result = await cloudinary.uploader.upload(req.file.path);
-    res.json(result);
+    console.log(result);
 
     const name = req.body.name;
     const avatar = result.secure_url;
     const age = req.body.age;
-
-   await db.query(
-      "INSERT INTO info (name, avatar, age) VALUES (?,?,?) ",
-      [name, avatar, age],
+    const cloudinary_id = result.public_id;
+    //in order  to not get an error res.json must not be used twice
+    // it is either res.json is used with the result of the cloudinary uploader or used in the mysql
+    //advicable to be used in the clousinary uploader so the secutre url can be seen
+    db.query(
+      "INSERT INTO info (name, avatar, age, cloudinary_id) VALUES (?,?,?,?) ",
+      [name, avatar, age, cloudinary_id],
       (err, result) => {
         if (err) {
-          res.status(400).json(err);
+          console.log(err);
         } else {
           res.json(result);
         }
@@ -66,4 +69,66 @@ router.post("/", upload.single("profile"), async (req, res) => {
     console.log(error);
   }
 });
+//step 4: how to delete information from the table in a databse and also
+/* deleting the images from the cloudinary in order to remove from cloudinary 
+the cloudinary image id needes to be stated pronto or else the image wont be able to removed from the cloudinary */
+router.delete('/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    //two functions must be used one to destroy the cloudinary image by selecting the id 
+    db.query('SELECT cloudinary_id FROM info WHERE id = ?', [id], (err, result) => {
+      if (err) {
+        console.log(err);
+      } else {
+        cloudinary.uploader.destroy(result[0].cloudinary_id, function(error, result) {
+          console.log(result)
+        })
+      }
+    });
+
+    db.query('DELETE FROM info WHERE id = ?', [id], (err, result) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.json({result,
+          message: "User successfully deleted"}
+          ); 
+      }
+    });
+  } catch (error) {
+    console.log(error)
+  }
+ 
+});
+
+
+//step5: change the information using put 
+router.put("/:id", upload.single("profile"), async (req, res) => {
+  try {
+    const data = req.params.id
+    // the image will be added in it again
+    const result = await cloudinary.uploader.upload(req.file.path);
+    const name = req.body.name || name;
+    const avatar = result.secure_url || avatar;
+    const age = req.body.age || age;
+    const cloudinary_id = result.public_id || cloudinary_id;
+    //in order  to not get an error res.json must not be used twice
+    // it is either res.json is used with the result of the cloudinary uploader or used in the mysql
+    //advicable to be used in the clousinary uploader so the secutre url can be seen
+    db.query(
+      "UPDATE  info SET `name` = ?, `avatar`=?, `age` = ?, `cloudinary_id` =?,WHERE id = ? ",
+      [name, avatar, age, cloudinary_id, data],
+      (err, result) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(result);
+        }
+      }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 module.exports = router;
