@@ -108,10 +108,10 @@ router.put("/:id", upload.single("profile"), async (req, res) => {
     const data = req.params.id
     // the image will be added in it again
     const result = await cloudinary.uploader.upload(req.file.path);
-    const name = req.body.name || name;
-    const avatar = result.secure_url || avatar;
-    const age = req.body.age || age;
-    const cloudinary_id = result.public_id || cloudinary_id;
+    const name = req.body.name 
+    const avatar = result.secure_url 
+    const age = req.body.age 
+    const cloudinary_id = result.public_id 
     //in order  to not get an error res.json must not be used twice
     // it is either res.json is used with the result of the cloudinary uploader or used in the mysql
     //advicable to be used in the clousinary uploader so the secutre url can be seen
