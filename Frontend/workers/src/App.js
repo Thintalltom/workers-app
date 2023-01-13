@@ -6,7 +6,9 @@ import Mainpage from './components/Mainpage/Mainpage';
 function App() {
   return (
     <div>
-      <h1 className='bg-green-100'>Hello world</h1>
+    <Routes>
+    <Route path='/' element={<Mainpage />} />
+    </Routes>
     </div>
   );
 }
